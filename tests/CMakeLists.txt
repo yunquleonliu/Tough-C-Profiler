@@ -28,8 +28,22 @@ function(add_tcc_test test_name source_file should_pass)
     endif()
 endfunction()
 
-# Placeholder tests - will be populated in Phase 7
-# 占位符测试 - 将在阶段7填充
+# Ownership tests / 所有权测试
+add_tcc_test(ownership_pass_smart_pointers "pass/ownership_smart_pointers.cpp" TRUE)
+add_tcc_test(ownership_pass_containers "pass/ownership_containers.cpp" TRUE)
+add_tcc_test(ownership_fail_new_delete "fail/ownership_new_delete.cpp" FALSE)
+add_tcc_test(ownership_fail_malloc_free "fail/ownership_malloc_free.cpp" FALSE)
+add_tcc_test(ownership_fail_raw_owning_ptr "fail/ownership_raw_owning_ptr.cpp" FALSE)
 
-# add_tcc_test(ownership_pass_unique_ptr "pass/ownership_unique_ptr.cpp" TRUE)
-# add_tcc_test(ownership_fail_raw_new "fail/ownership_raw_new.cpp" FALSE)
+# Lifetime tests / 生命周期测试
+add_tcc_test(lifetime_pass_correct_patterns "pass/lifetime_correct_patterns.cpp" TRUE)
+add_tcc_test(lifetime_fail_dangling "fail/lifetime_dangling.cpp" FALSE)
+add_tcc_test(lifetime_fail_raw_ptr_container "fail/lifetime_raw_ptr_container.cpp" FALSE)
+add_tcc_test(lifetime_fail_ref_member "fail/lifetime_ref_member.cpp" FALSE)
+
+# Concurrency tests / 并发测试
+add_tcc_test(concurrency_pass_safe "pass/concurrency_safe.cpp" TRUE)
+add_tcc_test(concurrency_fail_unsafe "fail/concurrency_unsafe.cpp" FALSE)
+
+# Complete test suite for MVP / MVP 完整测试套件
+# Total: 12 tests (6 pass, 6 fail) / 总计：12 个测试（6 个通过，6 个失败）

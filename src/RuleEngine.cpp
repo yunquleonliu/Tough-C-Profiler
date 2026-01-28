@@ -2,6 +2,10 @@
 // Tough C 分析器 - 规则引擎实现
 
 #include "tcc/RuleEngine.h"
+#include "tcc/OwnershipRules.h"
+#include "tcc/LifetimeRules.h"
+#include "tcc/ConcurrencyRules.h"
+#include "tcc/ASTVisitor.h"
 
 namespace tcc {
 
@@ -10,18 +14,29 @@ RuleEngine::RuleEngine() {
 }
 
 void RuleEngine::initializeDefaultRules() {
-    // TODO: Register default rules / 待实现：注册默认规则
-    // This will be implemented in Phase 3-5
-    // 这将在阶段3-5中实现
+    // Register ownership rules / 注册所有权规则
+    if (ownershipEnabled_) {
+        addRule(std::make_unique<ForbidNewRule>());
+        addRule(std::make_unique<ForbidDeleteRule>());
+        addRule(std::make_unique<ForbidMallocFreeRule>());
+        addRule(std::make_unique<RawOwningPointerRule>());
+    }
     
-    // For MVP placeholder / MVP占位符
-    // - Ownership rules will be added in Phase 3
-    // - Lifetime rules will be added in Phase 4  
-    // - Concurrency rules will be added in Phase 5
+    // Register lifetime rules / 注册生命周期规则
+    if (lifetimeEnabled_) {
+        addRule(std::make_unique<ForbidDanglingRefRule>());
+        addRule(std::make_unique<ForbidDanglingPtrRule>());
+        addRule(std::make_unique<ForbidRawPtrContainerRule>());
+        addRule(std::make_unique<ForbidUntrackedRefMemberRule>());
+    }
     
-    // - 所有权规则将在阶段3添加
-    // - 生命周期规则将在阶段4添加
-    // - 并发规则将在阶段5添加
+    // Register concurrency rules / 注册并发规则
+    if (concurrencyEnabled_) {
+        addRule(std::make_unique<ForbidUnsyncSharedStateRule>());
+        addRule(std::make_unique<ForbidNonConstLambdaCaptureRule>());
+        addRule(std::make_unique<ForbidRawPtrThreadSharingRule>());
+        addRule(std::make_unique<RequireAtomicForSharedCounterRule>());
+    }
 }
 
 void RuleEngine::addRule(std::unique_ptr<Rule> rule) {
@@ -29,6 +44,12 @@ void RuleEngine::addRule(std::unique_ptr<Rule> rule) {
 }
 
 void RuleEngine::analyze(clang::ASTContext& context, DiagnosticEngine& diagnostics) {
+    // Create AST visitor / 创建 AST 访问者
+    TCCASTVisitor visitor(context, rules_, diagnostics);
+    
+    // Traverse the entire AST / 遍历整个 AST
+    visitor.TraverseDecl(context.getTranslationUnitDecl());
+    
     // Run all enabled rules / 运行所有启用的规则
     for (const auto& rule : rules_) {
         // Check if rule category is enabled / 检查规则类别是否启用

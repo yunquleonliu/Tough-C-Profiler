@@ -8,6 +8,10 @@ set(TCC_SOURCES
     Rule.cpp
     FileDetector.cpp
     RuleEngine.cpp
+    ASTVisitor.cpp
+    OwnershipRules.cpp
+    LifetimeRules.cpp
+    ConcurrencyRules.cpp
 )
 
 # LLVM/Clang components needed / 需要的 LLVM/Clang 组件
