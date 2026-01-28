@@ -1,0 +1,47 @@
+﻿# Tough C Profiler - Source CMake
+# Tough C 分析器 - 源码 CMake
+
+# Collect all source files / 收集所有源文件
+set(TCC_SOURCES
+    main.cpp
+    Diagnostic.cpp
+    Rule.cpp
+    FileDetector.cpp
+    RuleEngine.cpp
+    ASTVisitor.cpp
+    OwnershipRules.cpp
+    LifetimeRules.cpp
+    ConcurrencyRules.cpp
+)
+
+# LLVM/Clang components needed / 需要的 LLVM/Clang 组件
+llvm_map_components_to_libnames(LLVM_LIBS support core)
+
+set(CLANG_LIBS
+    clangTooling
+    clangFrontend
+    clangDriver
+    clangSerialization
+    clangParse
+    clangSema
+    clangAnalysis
+    clangAST
+    clangBasic
+    clangEdit
+    clangLex
+    clangRewrite
+)
+
+# Build executable / 构建可执行文件
+add_executable(tcc-check ${TCC_SOURCES})
+
+# Link libraries / 链接库
+target_link_libraries(tcc-check PRIVATE
+    ${CLANG_LIBS}
+    ${LLVM_LIBS}
+)
+
+# Set output name / 设置输出名称
+set_target_properties(tcc-check PROPERTIES
+    OUTPUT_NAME "tcc-check"
+)

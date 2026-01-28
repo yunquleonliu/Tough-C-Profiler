@@ -1,0 +1,47 @@
+﻿name: Tough C CI / Tough C 持续集成
+# Continuous integration for Tough C Profiler
+# Tough C 分析器的持续集成
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build and Test / 构建与测试
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        llvm-version: [15, 16, 17]
+    
+    steps:
+    - name: Checkout code / 检出代码
+      uses: actions/checkout@v3
+    
+    - name: Install LLVM and Clang / 安装 LLVM 和 Clang
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: ${{ matrix.llvm-version }}
+    
+    - name: Configure CMake / 配置 CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release -DTCC_BUILD_TESTS=ON
+    
+    - name: Build / 构建
+      run: cmake --build build --config Release
+    
+    - name: Run tests / 运行测试
+      run: |
+        cd build
+        ctest --output-on-failure -C Release
+    
+    - name: Upload artifacts / 上传构建产物
+      uses: actions/upload-artifact@v3
+      with:
+        name: tcc-check-${{ matrix.os }}-llvm${{ matrix.llvm-version }}
+        path: build/src/tcc-check*

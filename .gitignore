@@ -1,0 +1,45 @@
+﻿# Build directories / 构建目录
+build/
+cmake-build-*/
+out/
+
+# IDE files / IDE 文件
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled files / 编译文件
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.dylib
+*.so
+*.dll
+*.a
+*.lib
+
+# CMake files / CMake 文件
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+
+# Test outputs / 测试输出
+Testing/
+*.log
+
+# OS files / 操作系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files / 临时文件
+*.tmp
+*.temp
+*.bak

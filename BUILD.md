@@ -1,0 +1,219 @@
+﻿# Tough C Profiler - Building and Usage Guide
+# Tough C 分析器 - 构建和使用指南
+
+## Quick Start / 快速开始
+
+### Prerequisites / 前置要求
+
+- **CMake** 3.20 or higher / 3.20 或更高版本
+- **C++17** compatible compiler / 兼容 C++17 的编译器
+- **LLVM/Clang** 15, 16, or 17 / 版本 15、16 或 17
+
+### Building / 构建
+
+```bash
+# Create build directory / 创建构建目录
+mkdir build && cd build
+
+# Configure / 配置
+cmake .. -DCMAKE_BUILD_TYPE=Release
+
+# Build / 构建
+cmake --build . --config Release
+
+# Run tests (optional) / 运行测试（可选）
+ctest -C Release
+```
+
+### Installation / 安装
+
+```bash
+# Install to system / 安装到系统
+sudo cmake --install .
+
+# Or specify install prefix / 或指定安装前缀
+cmake --install . --prefix /usr/local
+```
+
+---
+
+## Usage / 使用方法
+
+### Basic Usage / 基本使用
+
+```bash
+# Check a single file / 检查单个文件
+tcc-check myfile.tcc
+
+# Check multiple files / 检查多个文件
+tcc-check file1.tcc file2.tcc
+
+# With compilation database / 使用编译数据库
+tcc-check -p build/ src/main.tcc
+```
+
+### File Markers / 文件标记
+
+TCC analyzes files that have either:
+TCC 分析具有以下任一标记的文件：
+
+1. **`.tcc` extension** / **`.tcc` 扩展名**
+   ```cpp
+   // myfile.tcc
+   #include <memory>
+   // ... your code
+   ```
+
+2. **`@tcc` annotation** / **`@tcc` 注解**
+   ```cpp
+   // myfile.cpp
+   // @tcc
+   #include <memory>
+   // ... your code
+   ```
+
+### Command Options / 命令选项
+
+```bash
+# Show version / 显示版本
+tcc-check --version
+
+# Verbose output / 详细输出
+tcc-check --verbose myfile.tcc
+
+# Disable specific checks / 禁用特定检查
+tcc-check --no-ownership myfile.tcc   # Disable ownership / 禁用所有权
+tcc-check --no-lifetime myfile.tcc    # Disable lifetime / 禁用生命周期
+tcc-check --no-concurrency myfile.tcc # Disable concurrency / 禁用并发
+
+# Combine options / 组合选项
+tcc-check --verbose --no-concurrency myfile.tcc
+```
+
+---
+
+## Understanding Diagnostics / 理解诊断信息
+
+### Error Format / 错误格式
+
+```
+filename.tcc:10:5: error / 错误: Use of 'new' operator forbidden [TCC-OWN-001]
+  Fix suggestions / 修复建议:
+    → Use std::make_unique<T>() instead
+  Opt-out options / 退出选项:
+    ⚠ Remove @tcc annotation to use raw C++
+    ⚠ Move file out of TCC directory
+```
+
+### Error Categories / 错误类别
+
+- **`TCC-OWN-xxx`**: Ownership violations / 所有权违规
+- **`TCC-LIFE-xxx`**: Lifetime violations / 生命周期违规
+- **`TCC-CONC-xxx`**: Concurrency violations / 并发违规
+
+---
+
+## Integration / 集成
+
+### CMake Integration / CMake 集成
+
+```cmake
+# Add TCC check as custom target / 添加 TCC 检查作为自定义目标
+add_custom_target(tcc_check
+    COMMAND tcc-check ${CMAKE_SOURCE_DIR}/src/*.tcc
+    COMMENT "Running Tough C checks / 运行 Tough C 检查"
+)
+
+# Run TCC before build / 在构建前运行 TCC
+add_dependencies(my_target tcc_check)
+```
+
+### CI Integration / CI 集成
+
+```yaml
+# GitHub Actions example / GitHub Actions 示例
+- name: Run TCC Checks
+  run: |
+    tcc-check src/**/*.tcc
+    
+# Fail build on TCC errors / TCC 错误时失败构建
+- name: TCC Check
+  run: tcc-check src/**/*.tcc || exit 1
+```
+
+---
+
+## Examples / 示例
+
+See the `examples/` directory for:
+参见 `examples/` 目录以获取：
+
+- ✓ `01_smart_pointers.tcc` - Correct ownership / 正确的所有权
+- ✗ `02_raw_pointer_violations.tcc` - Ownership errors / 所有权错误
+- ✓ `03_lifetime_safety.tcc` - Safe lifetime / 安全的生命周期
+- ✗ `04_lifetime_violations.tcc` - Lifetime errors / 生命周期错误
+- ✓ `05_thread_safety.tcc` - Thread-safe patterns / 线程安全模式
+- ✗ `06_thread_violations.tcc` - Concurrency errors / 并发错误
+
+---
+
+## Escape Hatches / 逃生通道
+
+If TCC is too restrictive:
+如果 TCC 限制过多：
+
+### Option 1: Remove TCC marker / 选项1：移除 TCC 标记
+```cpp
+// myfile.cpp (no @tcc annotation)
+// Now this is regular C++ / 现在这是普通 C++
+int* ptr = new int(42);  // OK now / 现在可以了
+```
+
+### Option 2: Disable specific checks / 选项2：禁用特定检查
+```cpp
+// @tcc-no-ownership
+// Still TCC, but ownership checks disabled
+// 仍然是 TCC，但所有权检查已禁用
+```
+
+### Option 3: Mix TCC and non-TCC files / 选项3：混合 TCC 和非 TCC 文件
+```
+src/
+  safe_module.tcc     ← TCC enforced / TCC 强制
+  legacy_module.cpp   ← Regular C++ / 普通 C++
+```
+
+---
+
+## FAQ / 常见问题
+
+**Q: Does TCC change my code?**
+**Q: TCC 会改变我的代码吗？**
+
+A: No. TCC only analyzes and reports. It never modifies your source files.
+A: 不会。TCC 只分析和报告。它从不修改您的源文件。
+
+**Q: Can I use TCC with existing projects?**
+**Q: 我可以在现有项目中使用 TCC 吗？**
+
+A: Yes. Add TCC markers incrementally to files you want to check.
+A: 可以。逐步向您想检查的文件添加 TCC 标记。
+
+**Q: What if I need unsafe operations?**
+**Q: 如果我需要不安全的操作怎么办？**
+
+A: Remove the TCC marker from that specific file. TCC is opt-in per file.
+A: 从该特定文件移除 TCC 标记。TCC 是按文件选择加入的。
+
+---
+
+## Next Steps / 后续步骤
+
+- Read [Core Rule Sets.md](../Core%20Rule%20Sets.md) for rule details
+  阅读 [Core Rule Sets.md](../Core%20Rule%20Sets.md) 了解规则详情
+  
+- Check [vision.md](../Docs/vision.md) for philosophy
+  查看 [vision.md](../Docs/vision.md) 了解理念
+  
+- See [MVP Planning Document.md](../MVP%20Planning%20Document.md) for roadmap
+  参见 [MVP Planning Document.md](../MVP%20Planning%20Document.md) 了解路线图
